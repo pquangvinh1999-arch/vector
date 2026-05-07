@@ -3,29 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WHMProAiByVinh - Warehouse Management System</title>
+    <title>WHMProAiByVinh | Professional Warehouse</title>
+    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fcfcfd; }
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); }
+        :root { --primary: #3b82f6; --primary-dark: #1d4ed8; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; font-size: 13px; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); }
         .gradient-btn {
             background: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .gradient-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.5);
-            filter: brightness(1.1);
-        }
+        .gradient-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 15px -3px rgba(59, 130, 246, 0.4); }
         .table-row-anim { transition: all 0.2s ease; }
-        .table-row-anim:hover { background-color: #f8fafc; transform: scale(1.001); box-shadow: inset 4px 0 0 #3b82f6; }
-        .loader { border-top-color: #3b82f6; animation: spin 1s linear infinite; }
+        .table-row-anim:hover { background-color: #f1f5f9; box-shadow: inset 3px 0 0 var(--primary); }
+        .loader { border-top-color: var(--primary); animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .modal-enter { animation: modalFadeIn 0.3s ease-out; }
-        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .modal-enter { animation: modalFadeIn 0.2s ease-out; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body class="text-slate-900 overflow-x-hidden">
@@ -35,101 +35,105 @@
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md modal-enter border border-slate-100">
             <div class="text-center mb-8">
                 <div class="inline-flex p-3 rounded-2xl bg-blue-50 text-blue-600 mb-4">
-                    <i data-lucide="shield-check" class="w-10 h-10"></i>
+                    <i data-lucide="shield-check" class="w-8 h-8"></i>
                 </div>
-                <h2 class="text-3xl font-bold text-slate-800">Chào mừng trở lại</h2>
-                <p class="text-slate-500 mt-2">Vui lòng đăng nhập để quản lý kho</p>
+                <h2 class="text-2xl font-bold text-slate-800">WHMProAiByVinh</h2>
+                <p class="text-slate-500 mt-1">Hệ thống quản lý kho thông minh</p>
             </div>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Email / Tài khoản</label>
-                    <input type="email" id="loginUser" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" placeholder="name@company.com">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Email</label>
+                    <input type="email" id="loginUser" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="name@company.com">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
-                    <input type="password" id="loginPass" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" placeholder="••••••••">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Mật khẩu</label>
+                    <input type="password" id="loginPass" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="••••••••">
                 </div>
-                <button onclick="handleLogin()" class="w-full py-3 rounded-xl text-white font-semibold gradient-btn">
-                    Đăng nhập hệ thống
-                </button>
+                <button onclick="handleLogin()" class="w-full py-3 rounded-xl text-white font-semibold gradient-btn">Đăng nhập</button>
             </div>
         </div>
     </div>
 
     <!-- MAIN APP -->
     <div id="mainApp" class="hidden min-h-screen flex flex-col">
-        <header class="glass sticky top-0 z-40 px-6 py-4 flex justify-between items-center border-b border-slate-100">
-            <div class="flex items-center gap-3">
-                <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-2 rounded-lg shadow-lg shadow-blue-200">
-                    <i data-lucide="layout-dashboard" class="text-white w-6 h-6"></i>
+        <header class="glass sticky top-0 z-40 px-4 py-3 flex justify-between items-center border-b border-slate-100">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600 p-1.5 rounded-lg shadow-md">
+                    <i data-lucide="boxes" class="text-white w-5 h-5"></i>
                 </div>
-                <span class="text-xl font-bold tracking-tight text-slate-800">WHMPro<span class="text-blue-600">AiByVinh</span></span>
+                <span class="text-lg font-bold tracking-tight text-slate-800">WHMPro<span class="text-blue-600">AiByVinh</span></span>
             </div>
-            <div class="flex items-center gap-6">
-                <div class="text-right hidden md:block">
-                    <p id="userDisplay" class="text-sm font-semibold text-slate-800">Loading User...</p>
-                    <p id="timeDisplay" class="text-xs text-slate-500 font-medium"></p>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden sm:block">
+                    <p id="userDisplay" class="text-xs font-semibold text-slate-800">Loading...</p>
+                    <p id="timeDisplay" class="text-[10px] text-slate-500"></p>
                 </div>
                 <div class="relative group cursor-pointer" onclick="handleLogout()">
-                    <div class="h-10 w-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
-                        <img src="https://ui-avatars.com/api/?name=Admin+Vinh&background=0D8ABC&color=fff" alt="User">
+                    <div class="h-8 w-8 rounded-full bg-slate-200 border border-white shadow-sm overflow-hidden">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=random" alt="User">
                     </div>
                 </div>
             </div>
         </header>
 
-        <main class="p-6 max-w-[1600px] mx-auto w-full space-y-6">
-            <div class="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
-                <div class="flex gap-3">
-                    <button onclick="openModal('modalIn')" class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-medium gradient-btn">
-                        <i data-lucide="download-cloud" class="w-4 h-4"></i> Nhập kho
+        <main class="p-4 max-w-[1600px] mx-auto w-full space-y-4">
+            <!-- Toolbar -->
+            <div class="flex flex-col md:flex-row gap-3 justify-between items-center">
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button onclick="openModal('modalIn')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-white font-medium gradient-btn text-xs">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Nhập kho
                     </button>
-                    <button onclick="openModal('modalOut')" class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-medium bg-slate-800 hover:bg-slate-900 transition-all shadow-lg shadow-slate-200">
-                        <i data-lucide="upload-cloud" class="w-4 h-4"></i> Xuất kho
+                    <button onclick="openModal('modalOut')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-white font-medium bg-slate-800 hover:bg-slate-900 transition-all text-xs">
+                        <i data-lucide="minus-circle" class="w-4 h-4"></i> Xuất kho
+                    </button>
+                    <button onclick="openModal('modalLogs')" class="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 font-medium bg-white border border-slate-200 hover:bg-slate-50 transition-all text-xs">
+                        <i data-lucide="history" class="w-4 h-4"></i> Lịch sử
                     </button>
                 </div>
 
-                <div class="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-100 w-full lg:w-auto">
-                    <div class="relative flex-1 min-w-[250px]">
-                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                        <input type="text" id="globalSearch" onkeyup="filterData()" placeholder="Tìm kiếm nhanh (Item, Cont, Bin...)" 
-                               class="pl-10 pr-4 py-2 rounded-xl border-none bg-slate-50 focus:ring-2 focus:ring-blue-500 w-full text-sm outline-none transition-all">
+                <div class="flex flex-wrap gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-100 w-full md:w-auto">
+                    <div class="relative flex-1 min-w-[200px]">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"></i>
+                        <input type="text" id="globalSearch" onkeyup="filterData()" placeholder="Tìm Item, Cont, Bin..." 
+                               class="pl-9 pr-3 py-1.5 rounded-lg border-none bg-slate-50 focus:ring-2 focus:ring-blue-500 w-full text-xs outline-none transition-all">
                     </div>
-                    <select id="filterColumn" class="px-3 py-2 rounded-xl bg-slate-50 border-none text-xs font-medium text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                        <option value="all">Tất cả các trường</option>
+                    <select id="filterColumn" class="px-2 py-1.5 rounded-lg bg-slate-50 border-none text-[11px] font-medium text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <option value="all">Tất cả</option>
                         <option value="Item_Code">Item Code</option>
                         <option value="Cont">Container</option>
                         <option value="Bin">Bin</option>
-                        <option value="Box">Box</option>
-                        <option value="Pur_order">Pur Order</option>
                         <option value="TAG_ID">Tag ID</option>
                     </select>
+                    <div id="offlineBadge" class="hidden px-2 py-1 rounded-lg bg-amber-100 text-amber-700 text-[10px] font-bold flex items-center gap-1">
+                        <i data-lucide="wifi-off" class="w-3 h-3"></i> OFFLINE
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            <!-- Data Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-slate-50/50 border-b border-slate-100 text-slate-500 text-xs uppercase tracking-wider font-semibold">
-                                <th class="px-6 py-4 w-10 text-center"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
-                                <th class="px-6 py-4">Hình ảnh</th>
-                                <th class="px-6 py-4">Item Code</th>
-                                <th class="px-6 py-4">Container</th>
-                                <th class="px-6 py-4">Bin</th>
-                                <th class="px-6 py-4">Quantity</th>
-                                <th class="px-6 py-4">Box</th>
-                                <th class="px-6 py-4">Pur Order</th>
-                                <th class="px-6 py-4">Tag ID</th>
-                                <th class="px-6 py-4 text-center">Thao tác</th>
+                            <tr class="bg-slate-50/50 border-b border-slate-100 text-slate-500 text-[11px] uppercase tracking-wider font-semibold">
+                                <th class="px-4 py-3 w-10 text-center"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
+                                <th class="px-4 py-3">Ảnh</th>
+                                <th class="px-4 py-3">Item Code</th>
+                                <th class="px-4 py-3">Container</th>
+                                <th class="px-4 py-3">Bin</th>
+                                <th class="px-4 py-3">Quantity</th>
+                                <th class="px-4 py-3">Box</th>
+                                <th class="px-4 py-3">Pur Order</th>
+                                <th class="px-4 py-3">Tag ID</th>
+                                <th class="px-4 py-3 text-center">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody id="dataTableBody" class="divide-y divide-slate-50 text-sm"></tbody>
+                        <tbody id="dataTableBody" class="divide-y divide-slate-50 text-[12px]"></tbody>
                     </table>
                 </div>
                 <div id="loading" class="hidden flex flex-col items-center justify-center py-20">
-                    <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-200 h-12 w-12 mb-4"></div>
-                    <p class="text-slate-500 animate-pulse">Đang truy xuất dữ liệu từ Supabase...</p>
+                    <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-200 h-10 w-10 mb-3"></div>
+                    <p class="text-slate-500 animate-pulse text-xs">Đang tải dữ liệu...</p>
                 </div>
             </div>
         </main>
@@ -138,24 +142,22 @@
     <!-- IMAGE MODAL -->
     <div id="imageModal" class="fixed inset-0 z-[110] hidden flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
         <div class="relative max-w-4xl w-full flex flex-col items-center">
-            <button onclick="closeImage()" class="absolute -top-12 right-0 text-white hover:text-red-400 transition-colors">
-                <i data-lucide="x-circle" class="w-10 h-10"></i>
-            </button>
+            <button onclick="closeImage()" class="absolute -top-12 right-0 text-white hover:text-red-400"><i data-lucide="x-circle" class="w-10 h-10"></i></button>
             <img id="fullImage" src="" class="max-h-[85vh] max-w-full rounded-2xl shadow-2xl transition-transform duration-300 cursor-zoom-in" onclick="toggleZoom(this)">
         </div>
     </div>
 
-    <!-- FORM MODAL -->
+    <!-- GENERIC MODAL -->
     <div id="genericModal" class="fixed inset-0 z-[110] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
         <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl modal-enter p-6 border border-slate-100">
             <div class="flex justify-between items-center mb-6">
-                <h3 id="modalTitle" class="text-xl font-bold text-slate-800">Tiêu đề</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+                <h3 id="modalTitle" class="text-lg font-bold text-slate-800">Tiêu đề</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div id="modalContent" class="space-y-4"></div>
             <div class="mt-8 flex justify-end gap-3">
-                <button onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 font-medium hover:bg-slate-100 transition-all">Hủy</button>
-                <button id="modalSubmit" class="px-6 py-2 rounded-xl text-white font-medium gradient-btn">Xác nhận</button>
+                <button onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 font-medium hover:bg-slate-100 transition-all text-xs">Hủy</button>
+                <button id="modalSubmit" class="px-6 py-2 rounded-xl text-white font-medium gradient-btn text-xs">Xác nhận</button>
             </div>
         </div>
     </div>
@@ -163,49 +165,52 @@
     <script>
         // --- 1. CONFIGURATION ---
         const SUPABASE_URL = 'https://xsgvhxsfsaelaqnjrsvv.supabase.co'; 
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzZ3ZoeHNmc2FlbGFxbmpyc3Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMTgxOTEsImV4cCI6MjA5MzY5NDE5MX0.7-qk28hMkm8VeOsaWClbW-FHefcQA2kFWuksFPSLDog'; 
-        
-        // Đổi tên từ 'supabase' thành 'supabaseClient' để không bị xung đột với thư viện
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzZ3ZoeHNmc2FlbGFxbmpyc3Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMTgxOTEsImV4cCI6MjA5MzY5NDE5MX0.7-qk28hMkm8VeOsaWClbW-FHefcQA2kFWuksFPSLDog'; // Sử dụng Key của anh
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let allData = [];
         let filteredData = [];
+        let currentUser = null;
+        let html5QrScanner = null;
 
         // --- 2. INITIALIZATION ---
         window.onload = async () => {
             lucide.createIcons();
             updateTime();
             setInterval(updateTime, 1000);
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
+            updateOnlineStatus();
 
             try {
                 const { data: { session } } = await supabaseClient.auth.getSession();
-                if (session) {
-                    showApp(session.user);
-                }
-            } catch (e) {
-                console.error("Auth check failed", e);
-            }
+                if (session) showApp(session.user);
+            } catch (e) { console.error("Auth check failed", e); }
         };
 
         function updateTime() {
-            const now = new Date();
-            document.getElementById('timeDisplay').innerText = now.toLocaleString('vi-VN');
+            document.getElementById('timeDisplay').innerText = new Date().toLocaleString('vi-VN');
+        }
+
+        function updateOnlineStatus() {
+            const badge = document.getElementById('offlineBadge');
+            if (navigator.onLine) {
+                badge.classList.add('hidden');
+            } else {
+                badge.classList.remove('hidden');
+            }
         }
 
         // --- 3. AUTHENTICATION ---
         async function handleLogin() {
             const email = document.getElementById('loginUser').value;
             const password = document.getElementById('loginPass').value;
-
-            if (!email || !password) return alert('Vui lòng nhập đầy đủ email và mật khẩu!');
-
+            if (!email || !password) return alert('Vui lòng nhập đầy đủ thông tin!');
             try {
                 const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) throw error;
                 showApp(data.user);
-            } catch (err) {
-                alert('Sai tài khoản hoặc mật khẩu! Vui lòng kiểm tra lại.');
-            }
+            } catch (err) { alert('Sai tài khoản hoặc mật khẩu!'); }
         }
 
         async function handleLogout() {
@@ -214,13 +219,14 @@
         }
 
         function showApp(user) {
+            currentUser = user;
             document.getElementById('loginOverlay').classList.add('opacity-0', 'pointer-events-none');
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('userDisplay').innerText = `Xin chào, ${user.email}`;
             loadData();
         }
 
-        // --- 4. DATA HANDLING ---
+        // --- 4. DATA HANDLING & OFFLINE MODE ---
         async function loadData() {
             document.getElementById('loading').classList.remove('hidden');
             try {
@@ -231,11 +237,20 @@
 
                 if (error) throw error;
                 allData = data;
+                // Lưu vào LocalStorage cho chế độ Offline
+                localStorage.setItem('whm_cache', JSON.stringify(allData));
                 filteredData = [...allData];
                 renderTable(filteredData);
             } catch (err) {
-                console.error('Error:', err);
-                alert('Lỗi tải dữ liệu: ' + err.message);
+                console.log('Loading failed, checking cache...');
+                const cached = localStorage.getItem('whm_cache');
+                if (cached) {
+                    allData = JSON.parse(cached);
+                    filteredData = [...allData];
+                    renderTable(filteredData);
+                } else {
+                    alert('Lỗi tải dữ liệu và không có bản lưu offline!');
+                }
             } finally {
                 document.getElementById('loading').classList.add('hidden');
             }
@@ -244,34 +259,32 @@
         function renderTable(data) {
             const body = document.getElementById('dataTableBody');
             body.innerHTML = '';
-
             if (data.length === 0) {
                 body.innerHTML = `<tr><td colspan="10" class="p-10 text-center text-slate-400 italic">Không tìm thấy kết quả phù hợp</td></tr>`;
                 return;
             }
-
             data.forEach((row, index) => {
                 const tr = document.createElement('tr');
                 tr.className = 'table-row-anim';
                 tr.innerHTML = `
-                    <td class="px-6 py-4 text-center"><input type="checkbox" class="row-checkbox rounded border-slate-300 text-blue-600 focus:ring-blue-500"></td>
-                    <td class="px-6 py-4">
-                        <div class="w-10 h-10 rounded-lg bg-slate-100 cursor-pointer overflow-hidden border border-slate-200 hover:ring-2 ring-blue-500 transition-all" 
-                             onclick="openImage('${row.image_url || 'https://via.placeholder.com/150'}')">
+                    <td class="px-4 py-3 text-center"><input type="checkbox" class="row-checkbox rounded border-slate-300 text-blue-600"></td>
+                    <td class="px-4 py-3">
+                        <div class="w-8 h-8 rounded-md bg-slate-100 cursor-pointer overflow-hidden border border-slate-200" onclick="openImage('${row.image_url || 'https://via.placeholder.com/150'}')">
                             <img src="${row.image_url || 'https://via.placeholder.com/150'}" class="w-full h-full object-cover">
                         </div>
                     </td>
-                    <td class="px-6 py-4 font-semibold text-slate-700">${row.Item_Code}</td>
-                    <td class="px-6 py-4 text-slate-600">${row.Cont || '---'}</td>
-                    <td class="px-6 py-4 text-slate-600">${row.Bin || '---'}</td>
-                    <td class="px-6 py-4"><span class="px-2 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold">${row.Qty}</span></td>
-                    <td class="px-6 py-4 text-slate-600">${row.Box || '---'}</td>
-                    <td class="px-6 py-4 text-slate-600">${row.Pur_order || '---'}</td>
-                    <td class="px-6 py-4"><code class="bg-slate-100 px-2 py-1 rounded text-xs font-medium text-slate-500">${row.TAG_ID || 'N/A'}</code></td>
-                    <td class="px-6 py-4">
-                        <div class="flex justify-center gap-2">
-                            <button onclick="editRow(${index})" class="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                            <button onclick="markRow(${index})" class="p-2 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors"><i data-lucide="bookmark" class="w-4 h-4"></i></button>
+                    <td class="px-4 py-3 font-semibold text-slate-700">${row.Item_Code}</td>
+                    <td class="px-4 py-3 text-slate-600">${row.Cont || '---'}</td>
+                    <td class="px-4 py-3 text-slate-600">${row.Bin || '---'}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold">${row.Qty}</span></td>
+                    <td class="px-4 py-3 text-slate-600">${row.Box || '---'}</td>
+                    <td class="px-4 py-3 text-slate-600">${row.Pur_order || '---'}</td>
+                    <td class="px-4 py-3"><code class="bg-slate-100 px-1.5 py-0.5 rounded text-[10px] font-medium text-slate-500">${row.TAG_ID || 'N/A'}</code></td>
+                    <td class="px-4 py-3">
+                        <div class="flex justify-center gap-1">
+                            <button onclick="quickExport('${row.TAG_ID}', '${row.Item_Code}')" class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="Xuất nhanh"><i data-lucide="zap" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="editRow(${index})" class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Sửa"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="markRow(${index})" class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors" title="Đánh dấu"><i data-lucide="bookmark" class="w-3.5 h-3.5"></i></button>
                         </div>
                     </td>
                 `;
@@ -290,26 +303,245 @@
             renderTable(filteredData);
         }
 
-        function openModal(type) {
+        // --- 5. CORE LOGIC: IMPORT / EXPORT ---
+        async function openModal(type) {
             const modal = document.getElementById('genericModal');
             const title = document.getElementById('modalTitle');
             const content = document.getElementById('modalContent');
             modal.classList.remove('hidden');
+            
             if (type === 'modalIn') {
-                title.innerText = 'Nhập Kho';
-                content.innerHTML = `<div class="grid grid-cols-2 gap-4">
-                    <div class="col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Item Code</label><input type="text" class="w-full p-3 rounded-xl border border-slate-200 outline-none"></div>
-                    <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Số lượng</label><input type="number" class="w-full p-3 rounded-xl border border-slate-200 outline-none"></div>
-                    <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Bin</label><input type="text" class="w-full p-3 rounded-xl border border-slate-200 outline-none"></div>
-                </div>`;
+                title.innerText = 'Nhập Kho Nguyên Vật Liệu';
+                content.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2 flex gap-2">
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tag ID</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="in_tag" class="w-full p-2.5 rounded-xl border border-slate-200 outline-none text-xs">
+                                    <button onclick="startScan('in_tag')" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all"><i data-lucide="camera" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Box</label>
+                            <input type="text" id="in_box" class="w-full p-2.5 rounded-xl border border-slate-200 outline-none text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pur Order</label>
+                            <input type="text" id="in_pur" list="purList" class="w-full p-2.5 rounded-xl border border-slate-200 outline-none text-xs">
+                            <datalist id="purList">${getPurOrderSuggestions()}</datalist>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cont</label>
+                            <input type="text" id="in_cont" class="w-full p-2.5 rounded-xl border border-slate-200 outline-none text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Bin</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="in_bin" class="w-full p-2.5 rounded-xl border border-slate-200 outline-none text-xs">
+                                <button onclick="startScan('in_bin')" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all"><i data-lucide="camera" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('modalSubmit').onclick = handleImport;
+            } else if (type === 'modalOut') {
+                title.innerText = 'Xuất Kho Nhanh';
+                content.innerHTML = `
+                    <div class="space-y-6 text-center">
+                        <div class="flex gap-2">
+                            <input type="text" id="out_tag" onchange="fetchTagInfo(this.value)" placeholder="Quét hoặc nhập Tag ID..." 
+                                   class="flex-1 p-3 rounded-xl border-2 border-blue-500 outline-none font-mono text-center text-lg uppercase">
+                            <button onclick="startScan('out_tag')" class="p-3 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all"><i data-lucide="camera" class="w-6 h-6"></i></button>
+                        </div>
+                        <div id="tagResult" class="hidden p-4 rounded-2xl bg-blue-50 border border-blue-100 space-y-3 animate-pulse">
+                            <div class="flex justify-between text-sm"><span class="text-slate-500">Số lượng tồn:</span> <span id="res_qty" class="font-bold text-blue-700">0</span></div>
+                            <div class="flex justify-between text-sm"><span class="text-slate-500">Mã vật liệu:</span> <span id="res_item" class="font-bold text-slate-800">---</span></div>
+                            <div class="pt-3 border-t border-blue-200">
+                                <label class="block text-xs font-bold text-blue-600 uppercase mb-2">Chọn phương thức xuất</label>
+                                <div class="flex gap-2">
+                                    <button onclick="setExportMode('all')" id="btnAll" class="flex-1 py-2 rounded-lg bg-white border border-blue-300 text-xs font-medium hover:bg-blue-100">Xuất hết</button>
+                                    <button onclick="setExportMode('part')" id="btnPart" class="flex-1 py-2 rounded-lg bg-white border border-blue-300 text-xs font-medium hover:bg-blue-100">Xuất một phần</button>
+                                </div>
+                                <input type="number" id="out_qty_part" class="hidden w-full mt-3 p-2 rounded-lg border border-blue-300 text-center outline-none" placeholder="Nhập số lượng xuất...">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('modalSubmit').onclick = handleExport;
+            } else if (type === 'modalLogs') {
+                title.innerText = 'Nhật Ký Thao Tác';
+                content.innerHTML = `<div class="max-h-[60vh] overflow-y-auto space-y-2" id="logList"><p class="text-center text-slate-400 italic">Đang tải log...</p></div>`;
+                document.getElementById('modalSubmit').classList.add('hidden');
+                loadLogs();
+            }
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // --- BARCODE SCANNING (Camera) ---
+        async function startScan(targetId) {
+            const modal = document.getElementById('genericModal');
+            const content = document.getElementById('modalContent');
+            const originalContent = content.innerHTML;
+
+            content.innerHTML = `
+                <div class="relative">
+                    <div id="reader" class="w-full overflow-hidden rounded-2xl"></div>
+                    <button onclick="stopScan('${targetId}', \`${originalContent.replace(/"/g, '&quot;')}\`)" class="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full shadow-lg">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+            lucide.createIcons();
+
+            html5QrScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 150} });
+            html5QrScanner.render((text) => {
+                document.getElementById(targetId).value = text;
+                if(targetId === 'out_tag') fetchTagInfo(text);
+                stopScan(targetId, originalContent);
+            }, (err) => {});
+        }
+
+        function stopScan(targetId, prevContent) {
+            if (html5QrScanner) {
+                html5QrScanner.clear();
+                html5QrScanner = null;
+            }
+            document.getElementById('modalContent').innerHTML = prevContent;
+            lucide.createIcons();
+        }
+
+        // --- EXPORT LOGIC ---
+        let currentExportMode = 'all';
+        let activeTagData = null;
+
+        async function fetchTagInfo(tagId) {
+            if (!tagId) return;
+            const { data, error } = await supabaseClient.from('TembacBin').select('*').eq('TAG_ID', tagId).single();
+            const resultDiv = document.getElementById('tagResult');
+            if (data) {
+                activeTagData = data;
+                resultDiv.classList.remove('hidden');
+                document.getElementById('res_qty').innerText = data.Qty;
+                document.getElementById('res_item').innerText = data.Item_Code;
             } else {
-                title.innerText = 'Xuất Kho (PDA)';
-                content.innerHTML = `<div class="text-center space-y-4"><p class="text-slate-500">Quét TAG_ID để xuất hàng</p>
-                <input type="text" placeholder="QUÉT TẠI ĐÂY..." class="w-full p-4 rounded-xl border-2 border-blue-500 outline-none font-mono text-center text-xl uppercase" autofocus></div>`;
+                resultDiv.classList.add('hidden');
+                alert('Không tìm thấy TAG_ID này!');
             }
         }
 
-        function closeModal() { document.getElementById('genericModal').classList.add('hidden'); }
+        function setExportMode(mode) {
+            currentExportMode = mode;
+            document.getElementById('btnAll').className = mode === 'all' ? 'flex-1 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium' : 'flex-1 py-2 rounded-lg bg-white border border-blue-300 text-xs font-medium';
+            document.getElementById('btnPart').className = mode === 'part' ? 'flex-1 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium' : 'flex-1 py-2 rounded-lg bg-white border border-blue-300 text-xs font-medium';
+            document.getElementById('out_qty_part').classList.toggle('hidden', mode === 'all');
+        }
+
+        async function handleExport() {
+            const tagId = document.getElementById('out_tag').value;
+            if (!activeTagData) return alert('Vui lòng quét mã TAG ID!');
+
+            let exportQty = 0;
+            if (currentExportMode === 'all') {
+                exportQty = activeTagData.Qty;
+            } else {
+                exportQty = parseInt(document.getElementById('out_qty_part').value);
+                if (!exportQty || exportQty > activeTagData.Qty) return alert('Số lượng xuất không hợp lệ!');
+            }
+
+            const newQty = activeTagData.Qty - exportQty;
+
+            try {
+                // 1. Update Tồn kho
+                const { error: upErr } = await supabaseClient.from('TembacBin').update({ Qty: newQty }).eq('TAG_ID', tagId);
+                if (upErr) throw upErr;
+
+                // 2. Ghi Log
+                await supabaseClient.from('warehouse_logs').insert([{
+                    user_email: currentUser.email,
+                    action: 'XUẤT',
+                    item_code: activeTagData.Item_Code,
+                    tag_id: tagId,
+                    qty: exportQty
+                }]);
+
+                alert(`Xuất thành công ${exportQty} sản phẩm!`);
+                closeModal();
+                loadData();
+            } catch (e) { alert('Lỗi: ' + e.message); }
+        }
+
+        async function quickExport(tagId, itemCode) {
+            if(!tagId) return alert('Mặt hàng này không có Tag ID, vui lòng nhập thủ công!');
+            document.getElementById('out_tag').value = tagId;
+            openModal('modalOut');
+            fetchTagInfo(tagId);
+        }
+
+        // --- IMPORT LOGIC ---
+        function getPurOrderSuggestions() {
+            const orders = [...new Set(allData.map(r => r.Pur_order).filter(Boolean))];
+            return orders.map(o => `<option value="${o}">${o}</option>`).join('');
+        }
+
+        async function handleImport() {
+            const payload = {
+                TAG_ID: document.getElementById('in_tag').value,
+                Box: document.getElementById('in_box').value,
+                Pur_order: document.getElementById('in_pur').value,
+                Cont: document.getElementById('in_cont').value,
+                Bin: document.getElementById('in_bin').value,
+                Qty: 1 // mặc định nhập 1 hoặc thêm ô nhập qty
+            };
+            if (!payload.TAG_ID) return alert('Vui lòng nhập Tag ID!');
+
+            try {
+                const { error } = await supabaseClient.from('TembacBin').insert([payload]);
+                if (error) throw error;
+                
+                await supabaseClient.from('warehouse_logs').insert([{
+                    user_email: currentUser.email,
+                    action: 'NHẬP',
+                    item_code: 'NEW',
+                    tag_id: payload.TAG_ID,
+                    qty: payload.Qty
+                }]);
+
+                alert('Nhập kho thành công!');
+                closeModal();
+                loadData();
+            } catch (e) { alert('Lỗi: ' + e.message); }
+        }
+
+        // --- LOGS MODULE ---
+        async function loadLogs() {
+            const logDiv = document.getElementById('logList');
+            try {
+                const { data, error } = await supabaseClient.from('warehouse_logs').select('*').order('timestamp', { ascending: false }).limit(50);
+                if (error) throw error;
+                logDiv,innerHTML = data.map(l => `
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center text-[11px]">
+                        <div>
+                            <span class="font-bold ${l.action === 'XUẤT' ? 'text-red-500' : 'text-emerald-500'}">${l.action}</span>
+                            <span class="mx-2 text-slate-400">|</span>
+                            <span class="text-slate-700">${l.item_code} (${l.tag_id})</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-medium text-slate-800">SL: ${l.qty}</div>
+                            <div class="text-[10px] text-slate-400">${new Date(l.timestamp).toLocaleString('vi-VN')}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { logDiv.innerHTML = 'Lỗi tải log...'; }
+        }
+
+        // --- UTILS ---
+        function closeModal() { 
+            document.getElementById('genericModal').classList.add('hidden'); 
+            if(html5QrScanner) stopScan('dummy', '');
+        }
         function openImage(url) { document.getElementById('fullImage').src = url; document.getElementById('imageModal').classList.remove('hidden'); }
         function closeImage() { document.getElementById('imageModal').classList.add('hidden'); }
         function toggleZoom(img) { img.style.transform = img.style.transform === 'scale(1.5)' ? 'scale(1)' : 'scale(1.5)'; }
