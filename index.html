@@ -3,224 +3,352 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Code Assistant - Llama 3 70B</title>
-    <!-- Tích hợp Tailwind CSS -->
+    <title>WHMProAiByVinh - Warehouse Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Cấu hình màu sắc và style phụ -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        groq: '#f55036', // Màu chủ đạo của Groq
-                    }
-                }
-            }
-        }
-    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Tùy chỉnh thanh cuộn (Scrollbar) cho chuyên nghiệp */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #4B5563; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6B7280; }
-        
-        /* Hiệu ứng loading */
-        .typing-indicator span {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            background-color: #9CA3AF;
-            border-radius: 50%;
-            animation: typing 1.4s infinite ease-in-out both;
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fcfcfd; }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); }
+        .gradient-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes typing {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
+        .gradient-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+            filter: brightness(1.1);
         }
+        .table-row-anim { transition: all 0.2s ease; }
+        .table-row-anim:hover { background-color: #f8fafc; transform: scale(1.002); }
+        .loader { border-top-color: #3b82f6; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .modal-enter { animation: modalFadeIn 0.3s ease-out; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
-<body class="bg-gradient-to-br from-gray-900 via-slate-900 to-black min-h-screen flex items-center justify-center p-4 sm:p-8 font-sans text-gray-100">
+<body class="text-slate-900 overflow-x-hidden">
 
-    <!-- Main Chat Container (Glassmorphism) -->
-    <div class="w-full max-w-5xl bg-gray-800/60 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl flex flex-col h-[90vh] overflow-hidden">
-        
-        <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-700/50 bg-gray-900/50">
-            <div class="flex items-center gap-3">
-                <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-                <h1 class="text-xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
-                    Llama 3 (70B) Code Research
-                </h1>
+    <!-- LOGIN OVERLAY -->
+    <div id="loginOverlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 backdrop-blur-md transition-all duration-500">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md modal-enter border border-slate-100">
+            <div class="text-center mb-8">
+                <div class="inline-flex p-3 rounded-2xl bg-blue-50 text-blue-600 mb-4">
+                    <i data-lucide="shield-check" class="w-10 h-10"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-slate-800">Chào mừng trở lại</h2>
+                <p class="text-slate-500 mt-2">Vui lòng đăng nhập để quản lý kho</p>
             </div>
-            <!-- API Key Input -->
-            <div class="flex items-center gap-2">
-                <input type="password" id="apiKey" placeholder="Nhập Groq API Key..." 
-                    class="bg-gray-950 border border-gray-700 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-orange-500 transition-colors w-48 sm:w-64">
-            </div>
-        </div>
-
-        <!-- Chat History Area -->
-        <div id="chatBox" class="flex-1 overflow-y-auto p-6 space-y-6">
-            <!-- Lời chào mặc định -->
-            <div class="flex gap-4">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center font-bold text-sm shadow-lg shrink-0">AI</div>
-                <div class="bg-gray-700/50 border border-gray-600/50 text-gray-200 px-4 py-3 rounded-2xl rounded-tl-none max-w-[85%] whitespace-pre-wrap leading-relaxed">Xin chào! Tôi là trợ lý AI chạy trên mô hình Llama 3 70B của Groq. Anh có câu hỏi hay đoạn code nào cần nghiên cứu chuyên sâu không? Hãy nhập API Key ở góc trên bên phải để bắt đầu.</div>
-            </div>
-        </div>
-
-        <!-- Input Area -->
-        <div class="p-4 sm:p-6 border-t border-gray-700/50 bg-gray-800/80">
-            <div class="relative flex items-end gap-2">
-                <textarea id="userInput" rows="1" placeholder="Nhập câu hỏi hoặc paste code vào đây (Shift + Enter để xuống dòng)..." 
-                    class="w-full bg-gray-950 border border-gray-700 text-gray-100 rounded-xl pl-4 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all resize-none max-h-48 overflow-y-auto whitespace-pre-wrap"></textarea>
-                
-                <button id="sendBtn" onclick="sendMessage()" 
-                    class="absolute right-2 bottom-2 w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white rounded-lg flex items-center justify-center transition-all shadow-lg active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-                        <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
-                    </svg>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Email / Tài khoản</label>
+                    <input type="text" id="loginUser" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" placeholder="user@whmpro.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
+                    <input type="password" id="loginPass" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" placeholder="••••••••">
+                </div>
+                <button onclick="handleLogin()" class="w-full py-3 rounded-xl text-white font-semibold gradient-btn">
+                    Đăng nhập hệ thống
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Script xử lý Logic & Gọi API Groq -->
+    <!-- MAIN APP -->
+    <div id="mainApp" class="hidden min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="glass sticky top-0 z-40 px-6 py-4 flex justify-between items-center border-b border-slate-100">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-2 rounded-lg shadow-lg shadow-blue-200">
+                    <i data-lucide="layout-dashboard" class="text-white w-6 h-6"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tight text-slate-800">WHMPro<span class="text-blue-600">AiByVinh</span></span>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="text-right hidden md:block">
+                    <p id="userDisplay" class="text-sm font-semibold text-slate-800">Loading User...</p>
+                    <p id="timeDisplay" class="text-xs text-slate-500 font-medium"></p>
+                </div>
+                <div class="h-10 w-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
+                    <img src="https://ui-avatars.com/api/?name=Admin+Vinh&background=0D8ABC&color=fff" alt="User">
+                </div>
+            </div>
+        </header>
+
+        <main class="p-6 max-w-[1600px] mx-auto w-full space-y-6">
+            <!-- Action Bar -->
+            <div class="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+                <div class="flex gap-3">
+                    <button onclick="openModal('modalIn')" class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-medium gradient-btn">
+                        <i data-lucide="download-cloud" class="w-4 h-4"></i> Nhập kho
+                    </button>
+                    <button onclick="openModal('modalOut')" class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-medium bg-slate-800 hover:bg-slate-900 transition-all shadow-lg shadow-slate-200">
+                        <i data-lucide="upload-cloud" class="w-4 h-4"></i> Xuất kho
+                    </button>
+                </div>
+
+                <!-- Smart Filter -->
+                <div class="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-100 w-full lg:w-auto">
+                    <div class="relative flex-1 min-w-[200px]">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                        <input type="text" id="globalSearch" onkeyup="filterData()" placeholder="Tìm kiếm hàng loạt (Item, Cont, Bin...)" 
+                               class="pl-10 pr-4 py-2 rounded-xl border-none bg-slate-50 focus:ring-2 focus:ring-blue-500 w-full text-sm outline-none transition-all">
+                    </div>
+                    <select id="filterColumn" class="px-3 py-2 rounded-xl bg-slate-50 border-none text-xs font-medium text-slate-600 outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">Tất cả trường</option>
+                        <option value="Item_Code">Item Code</option>
+                        <option value="Cont">Container</option>
+                        <option value="Bin">Bin</option>
+                        <option value="Box">Box</option>
+                        <option value="Pur_order">Pur Order</option>
+                        <option value="TAG_ID">Tag ID</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/50 border-b border-slate-100 text-slate-500 text-xs uppercase tracking-wider font-semibold">
+                                <th class="px-6 py-4 w-10 text-center"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
+                                <th class="px-6 py-4">Ảnh</th>
+                                <th class="px-6 py-4">Item Code</th>
+                                <th class="px-6 py-4">Container</th>
+                                <th class="px-6 py-4">Bin</th>
+                                <th class="px-6 py-4">Quantity</th>
+                                <th class="px-6 py-4">Box</th>
+                                <th class="px-6 py-4">Pur Order</th>
+                                <th class="px-6 py-4">Tag ID</th>
+                                <th class="px-6 py-4 text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody" class="divide-y divide-slate-50 text-sm">
+                            <!-- Data injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Loading State -->
+                <div id="loading" class="flex flex-col items-center justify-center py-20">
+                    <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-200 h-12 w-12 mb-4"></div>
+                    <p class="text-slate-500 animate-pulse">Đang tải dữ liệu hệ thống...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <!-- Image Modal -->
+    <div id="imageModal" class="fixed inset-0 z-[110] hidden flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+        <div class="relative max-w-4xl w-full flex flex-col items-center">
+            <button onclick="closeImage()" class="absolute -top-12 right-0 text-white hover:text-red-400 transition-colors">
+                <i data-lucide="x-circle" class="w-10 h-10"></i>
+            </button>
+            <img id="fullImage" src="" class="max-h-[85vh] max-w-full rounded-2xl shadow-2xl transition-transform duration-300 cursor-zoom-in" onclick="toggleZoom(this)">
+            <div class="mt-4 text-white text-sm opacity-70">Nhấp vào ảnh để phóng to / thu nhỏ</div>
+        </div>
+    </div>
+
+    <!-- Generic Modal -->
+    <div id="genericModal" class="fixed inset-0 z-[110] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl modal-enter p-6 border border-slate-100">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="modalTitle" class="text-xl font-bold text-slate-800">Tiêu đề</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+            </div>
+            <div id="modalContent" class="space-y-4">
+                <!-- Form content here -->
+            </div>
+            <div class="mt-8 flex justify-end gap-3">
+                <button onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 font-medium hover:bg-slate-100 transition-all">Hủy</button>
+                <button id="modalSubmit" class="px-6 py-2 rounded-xl text-white font-medium gradient-btn">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const chatBox = document.getElementById('chatBox');
-        const userInput = document.getElementById('userInput');
-        const apiKeyInput = document.getElementById('apiKey');
-        let chatHistory = [
-            { role: "system", content: "You are an expert software engineer and code researcher. You provide deep, accurate, and professional explanations of code, architecture, and algorithms." }
-        ];
+        // --- CONFIGURATION ---
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Tự động điều chỉnh chiều cao textarea
-        userInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-            if(this.value === '') this.style.height = 'auto';
-        });
+        let allData = [];
+        let filteredData = [];
 
-        // Xử lý phím Enter để gửi (Shift+Enter để xuống dòng)
-        userInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            lucide.createIcons();
+            updateTime();
+            setInterval(updateTime, 1000);
+        };
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('timeDisplay').innerText = now.toLocaleString('vi-VN');
+        }
+
+        // --- AUTHENTICATION ---
+        async function handleLogin() {
+            const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPass').value;
+
+            if (!user || !pass) return alert('Vui lòng nhập đủ thông tin!');
+
+            // Giả lập Login (Anh có thể thay bằng supabase.auth.signInWithPassword)
+            document.getElementById('loginOverlay').classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userDisplay').innerText = `Xin chào, ${user}`;
+            
+            loadData();
+        }
+
+        // --- DATA HANDLING ---
+        async function loadData() {
+            document.getElementById('loading').classList.remove('hidden');
+            try {
+                const { data, error } = await supabase
+                    .from('TembacBin')
+                    .select('*')
+                    .order('Item_Code', { ascending: true });
+
+                if (error) throw error;
+                
+                allData = data;
+                filteredData = [...allData];
+                renderTable(filteredData);
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Lỗi tải dữ liệu: ' + err.message);
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
             }
-        });
+        }
 
-        async function sendMessage() {
-            const text = userInput.value.trim();
-            const apiKey = apiKeyInput.value.trim();
+        function renderTable(data) {
+            const body = document.getElementById('dataTableBody');
+            body.innerHTML = '';
 
-            if (!text) return;
-            if (!apiKey) {
-                alert("Vui lòng nhập Groq API Key ở góc trên cùng bên phải!");
-                apiKeyInput.focus();
+            if (data.length === 0) {
+                body.innerHTML = `<tr><td colspan="10" class="p-10 text-center text-slate-400 italic">Không tìm thấy kết quả phù hợp</td></tr>`;
                 return;
             }
 
-            // 1. Thêm tin nhắn của User vào UI
-            appendMessage('user', text);
-            userInput.value = '';
-            userInput.style.height = 'auto';
-            chatHistory.push({ role: "user", content: text });
+            data.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'table-row-anim';
+                tr.innerHTML = `
+                    <td class="px-6 py-4 text-center"><input type="checkbox" class="row-checkbox rounded border-slate-300 text-blue-600 focus:ring-blue-500"></td>
+                    <td class="px-6 py-4">
+                        <div class="w-10 h-10 rounded-lg bg-slate-100 cursor-pointer overflow-hidden border border-slate-200 hover:ring-2 ring-blue-500 transition-all" 
+                             onclick="openImage('${row.image_url || 'https://via.placeholder.com/150'}')">
+                            <img src="${row.image_url || 'https://via.placeholder.com/150'}" class="w-full h-full object-cover">
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 font-semibold text-slate-700">${row.Item_Code}</td>
+                    <td class="px-6 py-4 text-slate-600">${row.Cont || '---'}</td>
+                    <td class="px-6 py-4 text-slate-600">${row.Bin || '---'}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold">${row.Qty}</span>
+                    </td>
+                    <td class="px-6 py-4 text-slate-600">${row.Box || '---'}</td>
+                    <td class="px-6 py-4 text-slate-600">${row.Pur_order || '---'}</td>
+                    <td class="px-6 py-4"><code class="bg-slate-100 px-2 py-1 rounded text-xs font-medium text-slate-500">${row.TAG_ID || 'N/A'}</code></td>
+                    <td class="px-6 py-4">
+                        <div class="flex justify-center gap-2">
+                            <button onclick="editRow(${index})" class="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Chỉnh sửa">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="markRow(${index})" class="p-2 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors" title="Đánh dấu">
+                                <i data-lucide="bookmark" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
 
-            // 2. Hiện hiệu ứng Loading
-            const loadingId = showLoading();
+        // --- SMART FILTER ---
+        function filterData() {
+            const query = document.getElementById('globalSearch').value.toLowerCase();
+            const col = document.getElementById('filterColumn').value;
 
-            try {
-                // 3. Gọi API Groq (Chuẩn OpenAI tương thích)
-                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: "llama3-70b-8192", // Model 70 tỷ tham số siêu tốc độ của Groq
-                        messages: chatHistory,
-                        temperature: 0.2, // Nhiệt độ thấp để code/research chính xác hơn
-                        max_tokens: 4096
-                    })
-                });
-
-                const data = await response.json();
-                removeLoading(loadingId);
-
-                if (response.ok) {
-                    const aiContent = data.choices[0].message.content;
-                    appendMessage('ai', aiContent);
-                    chatHistory.push({ role: "assistant", content: aiContent });
+            filteredData = allData.filter(row => {
+                if (col === 'all') {
+                    return Object.values(row).some(val => String(val).toLowerCase().includes(query));
                 } else {
-                    appendMessage('error', `Lỗi API: ${data.error?.message || 'Không thể kết nối'}`);
+                    return String(row[col] || '').toLowerCase().includes(query);
                 }
-
-            } catch (error) {
-                removeLoading(loadingId);
-                appendMessage('error', `Lỗi hệ thống: ${error.message}`);
-            }
+            });
+            renderTable(filteredData);
         }
 
-        function appendMessage(sender, text) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `flex gap-4 ${sender === 'user' ? 'flex-row-reverse' : ''}`;
+        // --- UI ACTIONS ---
+        function openModal(type) {
+            const modal = document.getElementById('genericModal');
+            const title = document.getElementById('modalTitle');
+            const content = document.getElementById('modalContent');
             
-            let avatar = '';
-            let bubbleStyle = '';
-
-            if (sender === 'user') {
-                avatar = `<div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-sm shadow-lg shrink-0">U</div>`;
-                bubbleStyle = `bg-blue-600 text-white rounded-tr-none`;
-            } else if (sender === 'ai') {
-                avatar = `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center font-bold text-sm shadow-lg shrink-0">AI</div>`;
-                bubbleStyle = `bg-gray-700/50 border border-gray-600/50 text-gray-200 rounded-tl-none font-mono text-sm`;
-            } else {
-                avatar = `<div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center font-bold text-sm shadow-lg shrink-0">!</div>`;
-                bubbleStyle = `bg-red-900/50 border border-red-500/50 text-red-200 rounded-tl-none`;
-            }
-
-            // Dùng DOMPurify thực tế sẽ tốt hơn, nhưng ở đây dùng textContent hoặc thủ thuật bọc code cơ bản để render an toàn
-            const escapedText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-            msgDiv.innerHTML = `
-                ${avatar}
-                <div class="${bubbleStyle} px-4 py-3 rounded-2xl max-w-[85%] whitespace-pre-wrap leading-relaxed overflow-x-auto shadow-sm">
-                    ${escapedText}
-                </div>
-            `;
+            modal.classList.remove('hidden');
             
-            chatBox.appendChild(msgDiv);
-            scrollToBottom();
-        }
-
-        function showLoading() {
-            const id = 'loading-' + Date.now();
-            const msgDiv = document.createElement('div');
-            msgDiv.id = id;
-            msgDiv.className = `flex gap-4`;
-            msgDiv.innerHTML = `
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center font-bold text-sm shadow-lg shrink-0">AI</div>
-                <div class="bg-gray-700/50 border border-gray-600/50 px-4 py-4 rounded-2xl rounded-tl-none flex items-center">
-                    <div class="typing-indicator flex gap-1">
-                        <span></span><span></span><span></span>
+            if (type === 'modalIn') {
+                title.innerText = 'Nhập Kho Nguyên Vật Liệu';
+                content.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Item Code</label>
+                            <input type="text" class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Số lượng</label>
+                            <input type="number" class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Bin</label>
+                            <input type="text" class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
                     </div>
-                </div>
-            `;
-            chatBox.appendChild(msgDiv);
-            scrollToBottom();
-            return id;
+                `;
+            } else {
+                title.innerText = 'Xuất Kho Nguyên Vật Liệu';
+                content.innerHTML = `<p class="text-slate-500">Vui lòng quét mã TAG_ID để thực hiện xuất hàng nhanh.</p>
+                                    <input type="text" placeholder="Quét TAG_ID tại đây..." class="w-full p-4 rounded-xl border-2 border-blue-500 focus:ring-4 ring-blue-100 outline-none font-mono text-center text-lg">`;
+            }
         }
 
-        function removeLoading(id) {
-            const el = document.getElementById(id);
-            if (el) el.remove();
+        function closeModal() {
+            document.getElementById('genericModal').classList.add('hidden');
         }
 
-        function scrollToBottom() {
-            chatBox.scrollTop = chatBox.scrollHeight;
+        function openImage(url) {
+            document.getElementById('fullImage').src = url;
+            document.getElementById('imageModal').classList.remove('hidden');
+        }
+
+        function closeImage() {
+            document.getElementById('imageModal').classList.add('hidden');
+            document.getElementById('fullImage').style.transform = 'scale(1)';
+        }
+
+        function toggleZoom(img) {
+            img.style.transform = img.style.transform === 'scale(1.5)' ? 'scale(1)' : 'scale(1.5)';
+        }
+
+        function toggleSelectAll() {
+            const master = document.getElementById('selectAll');
+            document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = master.checked);
+        }
+
+        function editRow(index) {
+            alert('Đang mở form chỉnh sửa cho Item: ' + filteredData[index].Item_Code);
+        }
+
+        function markRow(index) {
+            alert('Đã đánh dấu hàng: ' + filteredData[index].Item_Code);
         }
     </script>
 </body>
